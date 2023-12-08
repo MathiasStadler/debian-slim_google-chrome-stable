@@ -137,8 +137,8 @@ RUN chmod +x rustup-init; \
  #   rustc --version;
 
 
-
 USER $USER
+
 ENV HOME /home/$USER
 WORKDIR /home/$USER
 

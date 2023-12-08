@@ -48,6 +48,8 @@ RUN apt-get update && apt-get install -y \
 
 
 # Chrome dependency Instalation
+# FROM HERE
+# https://github.com/Dmitry-Ostashev/testcafe-kubernetes-example/blob/main/Dockerfile
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
     libasound2 \
@@ -123,7 +125,9 @@ RUN set -eux; \
     echo "7aa9e2a380a9958fc1fc426a3323209b2c86181c6816640979580f62ff7d48d4 *rustup-init" | sha256sum -c -; 
 RUN chmod +x rustup-init; \
     ls -la rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.74.0 --default-host x86_64-unknown-linux-musl; \
+    # musl
+    # ./rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.74.0 --default-host x86_64-unknown-linux-musl; \
+    ./rustup-init -y --no-modify-path --profile default --default-toolchain stable --default-host x86_64-unknown-linux-gnu; \
     rm rustup-init; 
 
 # RUN set -eux; \

@@ -1,0 +1,1 @@
+[FROM HERE](https://stackoverflow.com/questions/70955307/how-to-install-google-chrome-in-a-docker-container)

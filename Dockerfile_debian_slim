@@ -9,48 +9,24 @@ ENV PGID='1000'
 ENV USER='user'
 
 # x downlaods
-RUN apt-get update && apt-get install -y xvfb \
+RUN apt-get update && apt-get install -yqq xvfb \
+    adduser \
     x11vnc \
-    bash 
-
-# vim \
-# xterm \
-# xeyes \
-# sudo 
-
-RUN apt-get update && apt-get install -y  vim \
-    # xterm \
-    # xeyes \
+    bash \
+    vim \
     htop \
-    sudo 
-
-
-RUN apt-get update && apt-get install -y   fluxbox \
+    sudo \
+    fluxbox \
     x11-utils # for xdpyinfo \
     bash \
     vim \
-    terminus-font 
-
-
-
-
-# RUN  sed -r -i "s/\[exec\] \(xterm\) \{xterm\}/\[exec\] \(st\) \{st -f 'xos4 Terminus-14'\}/" /usr/share/fluxbox/menu 	 \
-
-RUN mkdir -p /opt
-
-COPY bootstrap.sh /opt
-
-# curl downloads
-RUN apt-get update && apt-get install -y \
+    terminus-font \
     curl \
     wget \
-    ca-certificates
-
-
-# Chrome dependency Instalation
-# FROM HERE
-# https://github.com/Dmitry-Ostashev/testcafe-kubernetes-example/blob/main/Dockerfile
-RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    unzip \
+    # Chrome dependency Instalation
+    # FROM HERE - https://github.com/Dmitry-Ostashev/testcafe-kubernetes-example/blob/main/Dockerfile
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -74,50 +50,45 @@ RUN apt-get update && apt-get install -y \
     libu2f-udev \
     libvulkan1 \
     gcc
+
+
+
 # Chrome instalation 
-RUN curl -LO  https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN curl -vsSLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
 RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
-# RUN rm google-chrome-stable_current_amd64.deb
-# Check chrome version
-RUN echo "Chrome: " && google-chrome --version
+RUN rm google-chrome-stable_current_amd64.deb
 
-RUN apt-get update && apt-get install -y \
-    adduser
+# chrome driver install
+# https://stackoverflow.com/questions/45323271/how-to-run-selenium-with-chrome-in-docker
+RUN wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE`/chromedriver_linux64.zip
+RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 
+
+# clean up
 RUN apt-get autoremove -y \
     && apt-get clean -y \
     && apt-get autoclean -y \
     && rm -rf /var/lib/apt/lists/*
 
+# Check chrome version
+RUN echo "Chrome: " && google-chrome --version
+
+# create user $USER
 RUN addgroup --gid "$PGID" "$USER" && \
-    # adduser --gecos '' --no-create-home --disabled-password --uid "$PUID" --gid "$PGID" "$USER"
     adduser --gecos '' --disabled-password --uid "$PUID" --gid "$PGID" "$USER"
 
-# RUN adduser -D user 
-
+# add $USER to sudo
 RUN mkdir -p /etc/sudoers.d 
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/user \
     && chmod 0440 /etc/sudoers.d/user
 
-# install rust
+# install rust last stable version
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=1.74.0
-
-# RUN set -eux; \
-#    #apkArch="$(apk --print-arch)"; \
-#    apkArch="$(x86_64)"; \
-#    case "$apkArch" in \
-#    x86_64) rustArch='x86_64-unknown-linux-musl'; rustupSha256='7aa9e2a380a9958fc1fc426a3323209b2c86181c6816640979580f62ff7d48d4' ;; \
-#    aarch64) rustArch='aarch64-unknown-linux-musl'; rustupSha256='b1962dfc18e1fd47d01341e6897cace67cddfabf547ef394e8883939bd6e002e' ;; \
-#    *) echo >&2 "unsupported architecture: $apkArch"; exit 1 ;; \
-#    esac; 
-
-# ENV rustArch 'x86_64-unknown-linux-musl' \
-#    rustupSha256 '7aa9e2a380a9958fc1fc426a3323209b2c86181c6816640979580f62ff7d48d4'
 
 RUN set -eux; \
     url="https://static.rust-lang.org/rustup/archive/1.26.0/x86_64-unknown-linux-musl/rustup-init"; \
@@ -125,8 +96,6 @@ RUN set -eux; \
     echo "7aa9e2a380a9958fc1fc426a3323209b2c86181c6816640979580f62ff7d48d4 *rustup-init" | sha256sum -c -; 
 RUN chmod +x rustup-init; \
     ls -la rustup-init; \
-    # musl
-    # ./rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.74.0 --default-host x86_64-unknown-linux-musl; \
     ./rustup-init -y --no-modify-path --profile default --default-toolchain stable --default-host x86_64-unknown-linux-gnu; \
     rm rustup-init; 
 
@@ -134,8 +103,12 @@ RUN chmod +x rustup-init; \
 #    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
 #    rustup --version; \
 #    cargo --version; \
- #   rustc --version;
+#   rustc --version;# musl
+    # ./rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.74.0 --default-host x86_64-unknown-linux-musl; \
 
+RUN mkdir -p /opt
+
+COPY bootstrap.sh /opt
 
 USER $USER
 
